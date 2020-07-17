@@ -258,21 +258,26 @@ public class ReentrantReadWriteLock
          * The lower one representing the exclusive (writer) lock hold count,
          * and the upper the shared (reader) hold count.
          */
-
         static final int SHARED_SHIFT   = 16;
+        //共享锁（读锁）的状态单位值
         static final int SHARED_UNIT    = (1 << SHARED_SHIFT);
+        //共享锁线程最大个数，65535
         static final int MAX_COUNT      = (1 << SHARED_SHIFT) - 1;
+        //排他锁掩码，二进制。15个1
         static final int EXCLUSIVE_MASK = (1 << SHARED_SHIFT) - 1;
 
         /** Returns the number of shared holds represented in count  */
+        //返回读锁线程数
         static int sharedCount(int c)    { return c >>> SHARED_SHIFT; }
         /** Returns the number of exclusive holds represented in count  */
+        //返回写锁可重入个数
         static int exclusiveCount(int c) { return c & EXCLUSIVE_MASK; }
 
         /**
          * A counter for per-thread read hold counts.
-         * Maintained as a ThreadLocal; cached in cachedHoldCounter
+            Maintained as a ThreadLocal; cached in cachedHoldCounter
          */
+        //
         static final class HoldCounter {
             int count = 0;
             // Use id, not reference, to avoid garbage retention
@@ -331,6 +336,7 @@ public class ReentrantReadWriteLock
          * <p>This allows tracking of read holds for uncontended read
          * locks to be very cheap.
          */
+        //第一个获取到读锁的线程和可重入个数
         private transient Thread firstReader = null;
         private transient int firstReaderHoldCount;
 
@@ -388,6 +394,11 @@ public class ReentrantReadWriteLock
              *    it is either a reentrant acquire or
              *    queue policy allows it. If so, update state
              *    and set owner.
+             * 
+             *   逻辑：
+                        1.如果读锁计数器不为0 或者 写锁计数器不为0 并且 当前线程不是持有锁的线程，则失败返回；
+                        2.如果计数器达到最大值则失败；
+                        3.第1和第2都不满足时，此时线程可以开始尝试获取锁并更新锁状态；
              */
             Thread current = Thread.currentThread();
             int c = getState();
@@ -398,7 +409,7 @@ public class ReentrantReadWriteLock
                     return false;
                 if (w + exclusiveCount(acquires) > MAX_COUNT)
                     throw new Error("Maximum lock count exceeded");
-                // Reentrant acquire
+                // Reentrant acquire  // 重入锁更新锁状态
                 setState(c + acquires);
                 return true;
             }
@@ -480,6 +491,7 @@ public class ReentrantReadWriteLock
                     if (rh == null || rh.tid != getThreadId(current))
                         cachedHoldCounter = rh = readHolds.get();
                     else if (rh.count == 0)
+                        //todo      为什么要再放一次？
                         readHolds.set(rh);
                     rh.count++;
                 }
@@ -502,11 +514,15 @@ public class ReentrantReadWriteLock
             HoldCounter rh = null;
             for (;;) {
                 int c = getState();
+                //如果有其他线程获取了独占锁，返回-1
                 if (exclusiveCount(c) != 0) {
                     if (getExclusiveOwnerThread() != current)
                         return -1;
                     // else we hold the exclusive lock; blocking here
                     // would cause deadlock.
+                    //公平锁：；
+                    //不公平锁： apparentlyFirstQueuedIsExclusive()
+                    //      校验  在第一个节点后面的节点的线程存在，且第二个节点的线程获取的是独占锁：true
                 } else if (readerShouldBlock()) {
                     // Make sure we're not acquiring read lock reentrantly
                     if (firstReader == current) {
@@ -517,16 +533,16 @@ public class ReentrantReadWriteLock
                             if (rh == null || rh.tid != getThreadId(current)) {
                                 rh = readHolds.get();
                                 if (rh.count == 0)
-                                    readHolds.remove();
+                                    readHolds.remove();//todo   一直在对计数器中的count操作，为0时快速失败
                             }
                         }
                         if (rh.count == 0)
-                            return -1;
+                            return -1;    //todo 返回-1，退出自旋
                     }
                 }
-                if (sharedCount(c) == MAX_COUNT)
+                if (sharedCount(c) == MAX_COUNT)    //校验读锁是否满了
                     throw new Error("Maximum lock count exceeded");
-                if (compareAndSetState(c, c + SHARED_UNIT)) {
+                if (compareAndSetState(c, c + SHARED_UNIT)) {   //cas该状态
                     if (sharedCount(c) == 0) {
                         firstReader = current;
                         firstReaderHoldCount = 1;

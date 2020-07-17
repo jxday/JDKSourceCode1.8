@@ -786,8 +786,8 @@ public abstract class AbstractQueuedSynchronizer
 
     /**
      * Checks and updates status for a node that failed to acquire.
-     * Returns true if thread should block. This is the main signal
-     * control in all acquire loops.  Requires that pred == node.prev.
+     * Returns true if thread should block. 
+     * This is the main signal control in all acquire loops.  Requires that pred == node.prev.
      *
      * @param pred node's predecessor holding status
      * @param node the node
@@ -953,13 +953,13 @@ public abstract class AbstractQueuedSynchronizer
             boolean interrupted = false;
             for (;;) {
                 final Node p = node.predecessor();
-                if (p == head) {
+                if (p == head) {   //如果上一个节点是头节点的话，tryAcquireShared()
                     int r = tryAcquireShared(arg);
                     if (r >= 0) {
-                        setHeadAndPropagate(node, r);
-                        p.next = null; // help GC
-                        if (interrupted)
-                            selfInterrupt();
+                        setHeadAndPropagate(node, r);   //如果获取到锁，设置当前节点为头节点
+                        p.next = null; // help GC   清空上一个节点的next引用
+                        if (interrupted)        //如果当前线程被中断了    
+                            selfInterrupt();      //当前线程中断      Thread.currentThread().interrupt();
                         failed = false;
                         return;
                     }
@@ -969,7 +969,7 @@ public abstract class AbstractQueuedSynchronizer
                     interrupted = true;
             }
         } finally {
-            if (failed)
+            if (failed)           //如果当前线程被中断了，将node从阻塞队列中剔除
                 cancelAcquire(node);
         }
     }
@@ -1283,6 +1283,7 @@ public abstract class AbstractQueuedSynchronizer
      *        {@link #tryAcquireShared} but is otherwise uninterpreted
      *        and can represent anything you like.
      */
+    //获取锁失败，进入阻塞队列
     public final void acquireShared(int arg) {
         if (tryAcquireShared(arg) < 0)
             doAcquireShared(arg);
@@ -1463,6 +1464,7 @@ public abstract class AbstractQueuedSynchronizer
      * is not the first queued thread.  Used only as a heuristic in
      * ReentrantReadWriteLock.
      */
+    //校验 在第一个节点后面的节点的线程存在，且第二个节点的线程获取的是独占锁
     final boolean apparentlyFirstQueuedIsExclusive() {
         Node h, s;
         return (h = head) != null &&
