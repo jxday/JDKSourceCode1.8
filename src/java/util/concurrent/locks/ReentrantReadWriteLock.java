@@ -383,6 +383,7 @@ public class ReentrantReadWriteLock
             return free;
         }
 
+        
         protected final boolean tryAcquire(int acquires) {
             /*
              * Walkthrough:
@@ -403,7 +404,7 @@ public class ReentrantReadWriteLock
             Thread current = Thread.currentThread();
             int c = getState();
             int w = exclusiveCount(c);
-            if (c != 0) {
+            if (c != 0) {       //存在线程获取到锁，只有当前线程拿到独占锁时，可以执行重入操作
                 // (Note: if c != 0 and w == 0 then shared count != 0)
                 if (w == 0 || current != getExclusiveOwnerThread())
                     return false;
@@ -413,7 +414,12 @@ public class ReentrantReadWriteLock
                 setState(c + acquires);
                 return true;
             }
-            if (writerShouldBlock() ||
+            /**
+             * @see FairSync#hasQueuedPredecessors()  
+             * @see NonfairSync# return false 
+             */
+            //如果当前状态为0
+            if (writerShouldBlock() ||          //当前线程是否可以竞争到锁（公平锁，非公平锁）
                 !compareAndSetState(c, c + acquires))
                 return false;
             setExclusiveOwnerThread(current);
@@ -422,6 +428,7 @@ public class ReentrantReadWriteLock
 
         protected final boolean tryReleaseShared(int unused) {
             Thread current = Thread.currentThread();
+            //先判断是不是首读线程
             if (firstReader == current) {
                 // assert firstReaderHoldCount > 0;
                 if (firstReaderHoldCount == 1)
@@ -475,10 +482,14 @@ public class ReentrantReadWriteLock
             Thread current = Thread.currentThread();
             int c = getState();
             if (exclusiveCount(c) != 0 &&
-                getExclusiveOwnerThread() != current)
+                getExclusiveOwnerThread() != current)       //其他线程占有独占锁
                 return -1;
             int r = sharedCount(c);
-            if (!readerShouldBlock() &&
+            /**
+             * 非公平锁：
+             * @see AbstractQueuedSynchronizer#apparentlyFirstQueuedIsExclusive() 
+             */
+            if (!readerShouldBlock() &&                     //读锁是否在队列前列
                 r < MAX_COUNT &&
                 compareAndSetState(c, c + SHARED_UNIT)) {
                 if (r == 0) {
@@ -491,7 +502,7 @@ public class ReentrantReadWriteLock
                     if (rh == null || rh.tid != getThreadId(current))
                         cachedHoldCounter = rh = readHolds.get();
                     else if (rh.count == 0)
-                        //todo      为什么要再放一次？
+                        //为什么要再放一次？     因为释放锁的时候remove了
                         readHolds.set(rh);
                     rh.count++;
                 }
@@ -565,8 +576,11 @@ public class ReentrantReadWriteLock
 
         /**
          * Performs tryLock for write, enabling barging in both modes.
-         * This is identical in effect to tryAcquire except for lack
-         * of calls to writerShouldBlock.
+          This is identical in effect to tryAcquire except for lack
+          of calls to writerShouldBlock.
+         * 
+         * 执行tryLock进行写入，从而在两种模式下都可以进行插入。除了缺少对writerShouldBlock的调用外，这与tryAcquire的作用相同。
+         * 
          */
         final boolean tryWriteLock() {
             Thread current = Thread.currentThread();
@@ -594,7 +608,7 @@ public class ReentrantReadWriteLock
             for (;;) {
                 int c = getState();
                 if (exclusiveCount(c) != 0 &&
-                    getExclusiveOwnerThread() != current)
+                    getExclusiveOwnerThread() != current)      
                     return false;
                 int r = sharedCount(c);
                 if (r == MAX_COUNT)
@@ -738,6 +752,8 @@ public class ReentrantReadWriteLock
          * <p>If the write lock is held by another thread then
          * the current thread becomes disabled for thread scheduling
          * purposes and lies dormant until the read lock has been acquired.
+         * 
+         * @see Sync#tryAcquireShared(int) 
          */
         public void lock() {
             sync.acquireShared(1);
@@ -810,6 +826,7 @@ public class ReentrantReadWriteLock
          * {@code false}.
          *
          * @return {@code true} if the read lock was acquired
+         * @see Sync#tryReadLock() 
          */
         public boolean tryLock() {
             return sync.tryReadLock();
@@ -954,6 +971,14 @@ public class ReentrantReadWriteLock
          * thread becomes disabled for thread scheduling purposes and
          * lies dormant until the write lock has been acquired, at which
          * time the write lock hold count is set to one.
+         * 
+         *
+         * @see Sync#acquire(int)
+         * if (!tryAcquire(arg) &&
+         *             acquireQueued(addWaiter(Node.EXCLUSIVE), arg))
+         *             selfInterrupt();
+         * @see Sync#tryAcquire(int)
+         * @see Sync#acquireQueued(AbstractQueuedSynchronizer.Node, int) 
          */
         public void lock() {
             sync.acquire(1);
@@ -1042,6 +1067,8 @@ public class ReentrantReadWriteLock
          * @return {@code true} if the lock was free and was acquired
          * by the current thread, or the write lock was already held
          * by the current thread; and {@code false} otherwise.
+         * 
+         * @see Sync#tryWriteLock() 
          */
         public boolean tryLock( ) {
             return sync.tryWriteLock();

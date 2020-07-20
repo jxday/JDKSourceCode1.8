@@ -667,6 +667,8 @@ public abstract class AbstractQueuedSynchronizer
      * Release action for shared mode -- signals successor and ensures
      * propagation. (Note: For exclusive mode, release just amounts
      * to calling unparkSuccessor of head if it needs signal.)
+     *  @see AbstractQueuedSynchronizer#doAcquireShared(int)
+     *  释放一个节点，判断状态并且校验，通过的node中的线程将竞争锁
      */
     private void doReleaseShared() {
         /*
@@ -687,9 +689,9 @@ public abstract class AbstractQueuedSynchronizer
                 if (ws == Node.SIGNAL) {
                     if (!compareAndSetWaitStatus(h, Node.SIGNAL, 0))
                         continue;            // loop to recheck cases
-                    unparkSuccessor(h);
+                    unparkSuccessor(h);     //释放下一个节点的线程，如果为null，从尾往前找
                 }
-                else if (ws == 0 &&
+                else if (ws == 0 &&          //初始化的node
                          !compareAndSetWaitStatus(h, 0, Node.PROPAGATE))
                     continue;                // loop on failed CAS
             }
@@ -945,6 +947,7 @@ public abstract class AbstractQueuedSynchronizer
     /**
      * Acquires in shared uninterruptible mode.
      * @param arg the acquire argument
+     *  @see AbstractQueuedSynchronizer#doReleaseShared()
      */
     private void doAcquireShared(int arg) {
         final Node node = addWaiter(Node.SHARED);
