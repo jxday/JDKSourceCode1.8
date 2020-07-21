@@ -42,11 +42,11 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.LockSupport;
 
 /**
- * A capability-based lock with three modes for controlling read/write
- * access.  The state of a StampedLock consists of a version and mode.
- * Lock acquisition methods return a stamp that represents and
- * controls access with respect to a lock state; "try" versions of
- * these methods may instead return the special value zero to
+ * A capability-based lock with three modes for controlling read/write access. 
+    The state of a StampedLock consists of a version and mode.
+     Lock acquisition methods return a stamp that represents and
+     controls access with respect to a lock state; 
+    "try" versions of these methods may instead return the special value zero to
  * represent failure to acquire access. Lock release and conversion
  * methods require stamps as arguments, and fail if they do not match
  * the state of the lock. The three modes are:

@@ -803,7 +803,7 @@ public abstract class AbstractQueuedSynchronizer
              * to signal it, so it can safely park.
              */
             return true;
-        if (ws > 0) {
+        if (ws > 0) {    //取消状态
             /*
              * Predecessor was cancelled. Skip over predecessors and
              * indicate retry.
@@ -861,16 +861,20 @@ public abstract class AbstractQueuedSynchronizer
         boolean failed = true;
         try {
             boolean interrupted = false;
+            //自旋锁
             for (;;) {
+                //上一个节点
                 final Node p = node.predecessor();
+                //上一个节点是头节点就尝试获取锁，获取到之后，将当前节点设置为头节点
                 if (p == head && tryAcquire(arg)) {
                     setHead(node);
                     p.next = null; // help GC
                     failed = false;
                     return interrupted;
                 }
+                //获取失败，进行阻塞     前面的节点ws是-1，当前节点线程park
                 if (shouldParkAfterFailedAcquire(p, node) &&
-                    parkAndCheckInterrupt())
+                    parkAndCheckInterrupt())         //park
                     interrupted = true;
             }
         } finally {
@@ -1195,8 +1199,8 @@ public abstract class AbstractQueuedSynchronizer
       to implement method {@link Lock#lock}.
      
         tryAcquire：可重入锁：state是0或者独占模式同步的所有者是当前线程返回true。
+        如果没有获取到锁，则执行acquireQueued，将当前线程放入同步队列
      
-     如果没有获取到锁，则执行acquireQueued，将当前线程放入同步队列
      *
      * @param arg the acquire argument.  This value is conveyed to
      *        {@link #tryAcquire} but is otherwise uninterpreted and
@@ -1268,6 +1272,7 @@ public abstract class AbstractQueuedSynchronizer
     public final boolean release(int arg) {
         if (tryRelease(arg)) {
             Node h = head;
+            //防止重复释放,唤醒后续节点
             if (h != null && h.waitStatus != 0)
                 unparkSuccessor(h);
             return true;
@@ -1651,6 +1656,12 @@ public abstract class AbstractQueuedSynchronizer
          * unless the CAS failed (which is unlikely), it will be
          * there, so we hardly ever traverse much.
          */
+        /*
+           因为CAS操作替换值的时候可能会失败，所以有可能出现：
+           node.prev不为null，但是没在同步队列中。
+           
+           所以需要从队尾向前再遍历一遍。
+        */
         return findNodeFromTail(node);
     }
 
@@ -1686,10 +1697,11 @@ public abstract class AbstractQueuedSynchronizer
 
         /*
          * Splice onto queue and try to set waitStatus of predecessor to
-         * indicate that thread is (probably) waiting. If cancelled or
-         * attempt to set waitStatus fails, wake up to resync (in which
-         * case the waitStatus can be transiently and harmlessly wrong).
+          indicate that thread is (probably) waiting. 
+          If cancelled or attempt to set waitStatus fails, wake up to resync (in which
+           case the waitStatus can be transiently and harmlessly wrong).
          */
+        //todo 这里的node的ws可能会被修改，但是不影响唤醒。
         Node p = enq(node);
         int ws = p.waitStatus;
         if (ws > 0 || !compareAndSetWaitStatus(p, ws, Node.SIGNAL))
@@ -1705,15 +1717,13 @@ public abstract class AbstractQueuedSynchronizer
      * @return true if cancelled before the node was signalled
      */
     final boolean transferAfterCancelledWait(Node node) {
-        if (compareAndSetWaitStatus(node, Node.CONDITION, 0)) {
+        if (compareAndSetWaitStatus(node, Node.CONDITION, 0)) {      
             enq(node);
             return true;
         }
         /*
-         * If we lost out to a signal(), then we can't proceed
-         * until it finishes its enq().  Cancelling during an
-         * incomplete transfer is both rare and transient, so just
-         * spin.
+         * If we lost out to a signal(), then we can't proceed until it finishes its enq().  
+          Cancelling during an incomplete transfer is both rare and transient, so just spin.
          */
         while (!isOnSyncQueue(node))
             Thread.yield();
@@ -2033,11 +2043,14 @@ public abstract class AbstractQueuedSynchronizer
          * <li> Save lock state returned by {@link #getState}.
          * <li> Invoke {@link #release} with saved state as argument,
          *      throwing IllegalMonitorStateException if it fails.
-         * <li> Block until signalled or interrupted.
-         * <li> Reacquire by invoking specialized version of
-         *      {@link #acquire} with saved state as argument.
-         * <li> If interrupted while blocked in step 4, throw InterruptedException.
+         * <li> Block until signalled or interrupted.     //阻塞直到发信号或被打断
+         * <li> Reacquire by invoking specialized version of with saved state as argument.
+         *      {@link #acquire} 
+         * <li> If interrupted while blocked in step 4, throw InterruptedException.  //如果步骤4中被中断，抛出异常
          * </ol>
+         * 
+         * 在阻塞队列中新增节点，释放锁：失败则更新节点状态为取消。判断是否在同步队列中，当前线程挂起。
+         * 
          */
         public final void await() throws InterruptedException {
             if (Thread.interrupted())
@@ -2045,9 +2058,9 @@ public abstract class AbstractQueuedSynchronizer
             Node node = addConditionWaiter();
             int savedState = fullyRelease(node);
             int interruptMode = 0;
-            while (!isOnSyncQueue(node)) {
-                LockSupport.park(this);
-                if ((interruptMode = checkInterruptWhileWaiting(node)) != 0)
+            while (!isOnSyncQueue(node)) {      //判断是否在同步队列里，确保不在队列中时挂起线程，放入队列后跳出循环。
+                LockSupport.park(this);     //挂起
+                if ((interruptMode = checkInterruptWhileWaiting(node)) != 0)    //唤醒后判断线程的中断状态
                     break;
             }
             if (acquireQueued(node, savedState) && interruptMode != THROW_IE)

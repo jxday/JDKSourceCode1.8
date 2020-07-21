@@ -229,6 +229,8 @@ public class ReentrantLock implements Lock, java.io.Serializable {
         /**
          * Fair version of tryAcquire.  Don't grant access unless
          * recursive call or no waiters or is first.
+         * 
+         * 公平锁
          */
         protected final boolean tryAcquire(int acquires) {
             final Thread current = Thread.currentThread();
