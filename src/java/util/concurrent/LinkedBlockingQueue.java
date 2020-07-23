@@ -47,23 +47,24 @@ import java.util.Spliterators;
 import java.util.function.Consumer;
 
 /**
- * An optionally-bounded {@linkplain BlockingQueue blocking queue} based on
- * linked nodes.
- * This queue orders elements FIFO (first-in-first-out).
+ * An optionally-bounded {@linkplain BlockingQueue blocking queue} based on  linked nodes.     无界的阻塞队列
+ * This queue orders elements FIFO (first-in-first-out).    先进先出队列
  * The <em>head</em> of the queue is that element that has been on the
- * queue the longest time.
+ * queue the longest time.      head是队列时间最长的节点
  * The <em>tail</em> of the queue is that element that has been on the
- * queue the shortest time. New elements
- * are inserted at the tail of the queue, and the queue retrieval
- * operations obtain elements at the head of the queue.
- * Linked queues typically have higher throughput than array-based queues but
- * less predictable performance in most concurrent applications.
+ * queue the shortest time.           tail是队列时间最短的节点
+ * New elements are inserted at the tail of the queue, and the queue retrieval
+ * operations obtain elements at the head of the queue.     尾插法，获取操作从队列头部取出
+ * Linked queues typically have higher throughput than array-based queues but less predictable performance in most concurrent applications.
+ * 链接队列通常具有比基于数组实现的队列更高的吞吐量，原因是添加和删除各一把锁，互不影响。
+ * 但是在大多数并发应用程序中性能较差，原因是会产生额外node对象，处理大批量数据对GC有影响，
  *
- * <p>The optional capacity bound constructor argument serves as a
- * way to prevent excessive queue expansion. The capacity, if unspecified,
- * is equal to {@link Integer#MAX_VALUE}.  Linked nodes are
- * dynamically created upon each insertion unless this would bring the
+ * <p>The optional capacity bound constructor argument serves as a way to prevent excessive queue expansion.
+ * 可选带参数的构造方法是防止链表无限扩展的一种方法
+ * The capacity, if unspecified, is equal to {@link Integer#MAX_VALUE}.  
+ * Linked nodes are  dynamically created upon each insertion unless this would bring the
  * queue above capacity.
+ * 链表的节点是在每次插入时新建，除非达到最大容量
  *
  * <p>This class and its iterator implement all of the
  * <em>optional</em> methods of the {@link Collection} and {@link
@@ -83,16 +84,17 @@ public class LinkedBlockingQueue<E> extends AbstractQueue<E>
 
     /*
      * A variant of the "two lock queue" algorithm.  The putLock gates
-     * entry to put (and offer), and has an associated condition for
-     * waiting puts.  Similarly for the takeLock.  The "count" field
-     * that they both rely on is maintained as an atomic to avoid
-     * needing to get both locks in most cases. Also, to minimize need
-     * for puts to get takeLock and vice-versa, cascading notifies are
-     * used. When a put notices that it has enabled at least one take,
-     * it signals taker. That taker in turn signals others if more
-     * items have been entered since the signal. And symmetrically for
-     * takes signalling puts. Operations such as remove(Object) and
-     * iterators acquire both locks.
+      entry to put (and offer), and has an associated condition for
+      waiting puts.  Similarly for the takeLock. 
+      
+      The "count" field that they both rely on is maintained as an atomic to avoid
+      needing to get both locks in most cases. Also, to minimize need
+      for puts to get takeLock and vice-versa, cascading notifies are
+      used. When a put notices that it has enabled at least one take,
+      it signals taker. That taker in turn signals others if more
+      items have been entered since the signal. And symmetrically for
+      takes signalling puts. Operations such as remove(Object) and
+      iterators acquire both locks.
      *
      * Visibility between writers and readers is provided as follows:
      *
@@ -448,7 +450,7 @@ public class LinkedBlockingQueue<E> extends AbstractQueue<E>
         } finally {
             takeLock.unlock();
         }
-        if (c == capacity)
+        if (c == capacity)  //如果自减之前是满的，就设置非满
             signalNotFull();
         return x;
     }
@@ -487,7 +489,7 @@ public class LinkedBlockingQueue<E> extends AbstractQueue<E>
         final ReentrantLock takeLock = this.takeLock;
         takeLock.lock();
         try {
-            if (count.get() > 0) {
+            if (count.get() > 0) {          //dcl
                 x = dequeue();
                 c = count.getAndDecrement();
                 if (c > 1)
