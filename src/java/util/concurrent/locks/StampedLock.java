@@ -137,7 +137,7 @@ import java.util.concurrent.locks.LockSupport;
  *   private double x, y;
  *   private final StampedLock sl = new StampedLock();
  *
- *   void move(double deltaX, double deltaY) { // an exclusively locked method
+ *   void move(double deltaX, double deltaY) { // an exclusively locked method 独占锁方法
  *     long stamp = sl.writeLock();
  *     try {
  *       x += deltaX;
@@ -147,7 +147,7 @@ import java.util.concurrent.locks.LockSupport;
  *     }
  *   }
  *
- *   double distanceFromOrigin() { // A read-only method
+ *   double distanceFromOrigin() { // A read-only method        //只读方法
  *     long stamp = sl.tryOptimisticRead();
  *     double currentX = x, currentY = y;
  *     if (!sl.validate(stamp)) {

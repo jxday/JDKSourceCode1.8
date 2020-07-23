@@ -322,52 +322,55 @@ public class ConcurrentLinkedQueue<E> extends AbstractQueue<E>
      *
      * @return {@code true} (as specified by {@link Queue#offer})
      * @throws NullPointerException if the specified element is null
+     * 在队尾添加一个元素
      */
-    public boolean offer(E e) {
+    public boolean offer(E e) {                     //改tail和next
         checkNotNull(e);
         final Node<E> newNode = new Node<E>(e);
 
-        for (Node<E> t = tail, p = t;;) {
+        for (Node<E> t = tail, p = t;;) {    //自旋
             Node<E> q = p.next;
             if (q == null) {
-                // p is last node
-                if (p.casNext(null, newNode)) {
+                // p is last node       
+                if (p.casNext(null, newNode)) {           
                     // Successful CAS is the linearization point
                     // for e to become an element of this queue,
                     // and for newNode to become "live".
-                    if (p != t) // hop two nodes at a time
-                        casTail(t, newNode);  // Failure is OK.
+                    if (p != t) // hop two nodes at a time       //p被重新赋值之后，更新tail
+                        //cas失败了就不管了
+                        casTail(t, newNode);  // Failure is OK.    //tail是延迟更新的，实际offer的节点已经在之前casNext的操作中添加进去了
                     return true;
                 }
                 // Lost CAS race to another thread; re-read next
             }
-            else if (p == q)
-                // We have fallen off list.  If tail is unchanged, it
-                // will also be off-list, in which case we need to
-                // jump to head, from which all live nodes are always
-                // reachable.  Else the new tail is a better bet.
+            else if (p == q)       
+//                 We have fallen off list.  If tail is unchanged, it
+//                 will also be off-list, in which case we need to
+//                 jump to head, from which all live nodes are always
+//                 reachable.  Else the new tail is a better bet.
                 p = (t != (t = tail)) ? t : head;
             else
-                // Check for tail updates after two hops.
-                p = (p != t && t != (t = tail)) ? t : q;
+                // Check for tail updates after two hops.   //定位队列真正的对尾节点
+                p = (p != t && t != (t = tail)) ? t : q;          //有新的尾巴就用新的尾巴，没有就继续往后找
         }
     }
 
-    public E poll() {
+    //返回头，并删除
+    public E poll() {                   //改item和head
         restartFromHead:
         for (;;) {
             for (Node<E> h = head, p = h, q;;) {
                 E item = p.item;
 
-                if (item != null && p.casItem(item, null)) {
+                if (item != null && p.casItem(item, null)) {         //如果头节点存在item，替换为null
                     // Successful CAS is the linearization point
                     // for item to be removed from this queue.
                     if (p != h) // hop two nodes at a time
                         updateHead(h, ((q = p.next) != null) ? q : p);
                     return item;
                 }
-                else if ((q = p.next) == null) {
-                    updateHead(h, p);
+                else if ((q = p.next) == null) {        //如果并发删掉了head的item，赋值q，判断q是否是真实尾节点
+                    updateHead(h, p);     //
                     return null;
                 }
                 else if (p == q)
@@ -378,24 +381,26 @@ public class ConcurrentLinkedQueue<E> extends AbstractQueue<E>
         }
     }
 
+    //返回头，不删除
     public E peek() {
         restartFromHead:
         for (;;) {
             for (Node<E> h = head, p = h, q;;) {
                 E item = p.item;
-                if (item != null || (q = p.next) == null) {
+                if (item != null || (q = p.next) == null) {       //如果当时head里面有item或者这个队列是空的，就返回取到的item
                     updateHead(h, p);
                     return item;
                 }
-                else if (p == q)
+                else if (p == q)          //并发执行了，重新peek
                     continue restartFromHead;
-                else
+                else               //head的item是null，存在next不为null，继续往下寻找
                     p = q;
             }
         }
     }
 
     /**
+     * 返回列表中的第一个活动（未删除）节点；如果没有，则返回null。
      * Returns the first live (non-deleted) node on list, or null if none.
      * This is yet another variant of poll/peek; here returning the
      * first node, not element.  We could make peek() a wrapper around
