@@ -1,5 +1,7 @@
 package util;
 
+import java.util.concurrent.ConcurrentLinkedQueue;
+
 /**
  * 〈〉
  *
@@ -14,7 +16,14 @@ public class testLinkList {
     }
 
     private static void test1() {
-        LinkedList linkedList = new LinkedList();
-        System.out.println(linkedList);
+        ConcurrentLinkedQueue<String> queue = new ConcurrentLinkedQueue<>();
+        queue.peek();
+//        queue.add("111");
+//        queue.poll();
+//        queue.add("111");
+//        queue.add("222");
+//        queue.peek();
+//        queue.poll();
+        System.out.println(queue.size());
     }
 }

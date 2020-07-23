@@ -850,8 +850,8 @@ public abstract class AbstractQueuedSynchronizer
      */
 
     /**
-     * Acquires in exclusive uninterruptible mode for thread already in
-     * queue. Used by condition wait methods as well as acquire.
+     * Acquires in exclusive uninterruptible mode for thread already in queue. 
+     * Used by condition wait methods as well as acquire.
      *
      * @param node the node
      * @param arg the acquire argument
