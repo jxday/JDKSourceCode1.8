@@ -45,27 +45,27 @@ import java.util.Spliterators;
 import java.util.Spliterator;
 
 /**
- * A bounded {@linkplain BlockingQueue blocking queue} backed by an
- * array.  This queue orders elements FIFO (first-in-first-out).  The
- * <em>head</em> of the queue is that element that has been on the
+ * A bounded {@linkplain BlockingQueue blocking queue} backed by an array.        有界数组，阻塞
+ * This queue orders elements FIFO (first-in-first-out).        队列元素先进先出
+ * The <em>head</em> of the queue is that element that has been on the          
  * queue the longest time.  The <em>tail</em> of the queue is that
- * element that has been on the queue the shortest time. New elements
- * are inserted at the tail of the queue, and the queue retrieval
- * operations obtain elements at the head of the queue.
+ * element that has been on the queue the shortest time.        head是进入队列时间最久的元素，tail是时间最短的
+ * New elements are inserted at the tail of the queue, and the queue retrieval
+ * operations obtain elements at the head of the queue.     头部取出，尾部插入
  *
- * <p>This is a classic &quot;bounded buffer&quot;, in which a
+ * <p>This is a classic &quot;bounded buffer&quot;, in which a   //经典的有界缓冲区，其中固定长度的数组包含生产者插入的元素和消费者取出的元素。
  * fixed-sized array holds elements inserted by producers and
- * extracted by consumers.  Once created, the capacity cannot be
- * changed.  Attempts to {@code put} an element into a full queue
+ * extracted by consumers.  Once created, the capacity cannot be     //一旦创建，容器不能改变
+ * changed.  Attempts to {@code put} an element into a full queue    //插入时，队列满了会阻塞
  * will result in the operation blocking; attempts to {@code take} an
- * element from an empty queue will similarly block.
+ * element from an empty queue will similarly block.                //尝试从空队列取出时，会蕾丝阻塞
  *
- * <p>This class supports an optional fairness policy for ordering
- * waiting producer and consumer threads.  By default, this ordering
+ * <p>This class supports an optional fairness policy for ordering      //此类支持可选的公平策略的生产者-消费者模式
+ * waiting producer and consumer threads.  By default, this ordering    //默认情况下并不保证顺序
  * is not guaranteed. However, a queue constructed with fairness set
  * to {@code true} grants threads access in FIFO order. Fairness
  * generally decreases throughput but reduces variability and avoids
- * starvation.
+ * starvation.      公平策略会减少可用性，但是会降低可见性并且避免饥饿
  *
  * <p>This class and its iterator implement all of the
  * <em>optional</em> methods of the {@link Collection} and {@link
@@ -83,10 +83,8 @@ public class ArrayBlockingQueue<E> extends AbstractQueue<E>
         implements BlockingQueue<E>, java.io.Serializable {
 
     /**
-     * Serialization ID. This class relies on default serialization
-     * even for the items array, which is default-serialized, even if
-     * it is empty. Otherwise it could not be declared final, which is
-     * necessary here.
+     * Serialization ID. This class relies on default serialization even for the items array, which is default-serialized, even if it is empty. 
+     * Otherwise it could not be declared final, which is necessary here.
      */
     private static final long serialVersionUID = -817911632652898426L;
 
