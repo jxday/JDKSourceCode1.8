@@ -51,8 +51,8 @@ import java.util.function.Consumer;
 import sun.misc.SharedSecrets;
 
 /**
- * An unbounded {@linkplain BlockingQueue blocking queue} that uses
- * the same ordering rules as class {@link PriorityQueue} and supplies
+ * An unbounded {@linkplain BlockingQueue blocking queue} that uses   //无界阻塞队列
+ * the same ordering rules as class {@link PriorityQueue} and supplies      
  * blocking retrieval operations.  While this queue is logically
  * unbounded, attempted additions may fail due to resource exhaustion
  * (causing {@code OutOfMemoryError}). This class does not permit
