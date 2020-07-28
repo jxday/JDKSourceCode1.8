@@ -47,7 +47,7 @@ import java.util.Spliterators;
 import java.util.function.Consumer;
 
 /**
- * An optionally-bounded {@linkplain BlockingQueue blocking queue} based on  linked nodes.     无界的阻塞队列
+ * An optionally-bounded {@linkplain BlockingQueue blocking queue} based on  linked nodes.     有界的阻塞队列
  * This queue orders elements FIFO (first-in-first-out).    先进先出队列
  * The <em>head</em> of the queue is that element that has been on the
  * queue the longest time.      head是队列时间最长的节点

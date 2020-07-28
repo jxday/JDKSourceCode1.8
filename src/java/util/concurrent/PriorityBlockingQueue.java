@@ -51,27 +51,27 @@ import java.util.function.Consumer;
 import sun.misc.SharedSecrets;
 
 /**
- * An unbounded {@linkplain BlockingQueue blocking queue} that uses   //无界阻塞队列
+ * An unbounded {@linkplain BlockingQueue blocking queue} that uses   //无界阻塞队列,
  * the same ordering rules as class {@link PriorityQueue} and supplies      
- * blocking retrieval operations.  While this queue is logically
+ * blocking retrieval operations.  While this queue is logically        //在逻辑上上无界的，但是可能会由于资源耗尽而添加失败OOM
  * unbounded, attempted additions may fail due to resource exhaustion
- * (causing {@code OutOfMemoryError}). This class does not permit
- * {@code null} elements.  A priority queue relying on {@linkplain
- * Comparable natural ordering} also does not permit insertion of
+ * (causing {@code OutOfMemoryError}). This class does not permit    //不允许添加null
+ * {@code null} elements.  A priority queue relying on {@linkplain    
+ * Comparable natural ordering} also does not permit insertion of    //依赖于Comparable，不允许插入没有实现Comparable的元素
  * non-comparable objects (doing so results in
  * {@code ClassCastException}).
  *
- * <p>This class and its iterator implement all of the
+ * <p>This class and its iterator implement all of the                   //此类实现iterator方法
  * <em>optional</em> methods of the {@link Collection} and {@link
- * Iterator} interfaces.  The Iterator provided in method {@link
+ * Iterator} interfaces.  The Iterator provided in method {@link         //iterator不保证有序
  * #iterator()} is <em>not</em> guaranteed to traverse the elements of
- * the PriorityBlockingQueue in any particular order. If you need
+ * the PriorityBlockingQueue in any particular order. If you need         //建议 Arrays.sort(pq.toArray())，获取有序遍历
  * ordered traversal, consider using
- * {@code Arrays.sort(pq.toArray())}.  Also, method {@code drainTo}
- * can be used to <em>remove</em> some or all elements in priority
+ * {@code Arrays.sort(pq.toArray())}.  Also, method {@code drainTo}       //drainTo方法可以根据优先级 remove出一些或者全部元素，并返回
+ * can be used to <em>remove</em> some or all elements in priority        
  * order and place them in another collection.
  *
- * <p>Operations on this class make no guarantees about the ordering
+ * <p>Operations on this class make no guarantees about the ordering      //此类不支持同优先级下再次定义优先级，如需强制排序，可以自定义类或比较器
  * of elements with equal priority. If you need to enforce an
  * ordering, you can define custom classes or comparators that use a
  * secondary key to break ties in primary priority values.  For
@@ -353,11 +353,13 @@ public class PriorityBlockingQueue<E> extends AbstractQueue<E>
      * @param k the position to fill
      * @param x the item to insert
      * @param array the heap array
+     *              
+     *              插入的时候根据compareTo实现堆排序，在二叉树内，保证大致有序，根元素一定是最小值
      */
     private static <T> void siftUpComparable(int k, T x, Object[] array) {
         Comparable<? super T> key = (Comparable<? super T>) x;
         while (k > 0) {
-            int parent = (k - 1) >>> 1;
+            int parent = (k - 1) >>> 1;            //堆
             Object e = array[parent];
             if (key.compareTo((T) e) >= 0)
                 break;
@@ -546,7 +548,7 @@ public class PriorityBlockingQueue<E> extends AbstractQueue<E>
         lock.lockInterruptibly();
         E result;
         try {
-            while ( (result = dequeue()) == null)
+            while ( (result = dequeue()) == null) //取出来的是null就进入阻塞
                 notEmpty.await();
         } finally {
             lock.unlock();
