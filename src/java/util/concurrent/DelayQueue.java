@@ -40,7 +40,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.*;
 
 /**
- * An unbounded {@linkplain BlockingQueue blocking queue} of
+ * An unbounded {@linkplain BlockingQueue blocking queue} of            //元素必须实现Delayed接口
  * {@code Delayed} elements, in which an element can only be taken
  * when its delay has expired.  The <em>head</em> of the queue is that
  * {@code Delayed} element whose delay expired furthest in the
@@ -74,19 +74,19 @@ public class DelayQueue<E extends Delayed> extends AbstractQueue<E>
     private final PriorityQueue<E> q = new PriorityQueue<E>();
 
     /**
-     * Thread designated to wait for the element at the head of
-     * the queue.  This variant of the Leader-Follower pattern
+     * Thread designated to wait for the element at the head of             //指定 用于等待位于队列头部元素的线程
+     * the queue.  This variant of the Leader-Follower pattern              //Leader-Follower模式的变体，用于减少不必要的等待时间
      * (http://www.cs.wustl.edu/~schmidt/POSA/POSA2/) serves to
-     * minimize unnecessary timed waiting.  When a thread becomes
-     * the leader, it waits only for the next delay to elapse, but
-     * other threads await indefinitely.  The leader thread must
+     * minimize unnecessary timed waiting.  When a thread becomes            //当一个线程成为leader，它只等待下一个延时过去，但是其他线程将会无限等待。
+     * the leader, it waits only for the next delay to elapse, but            
+     * other threads await indefinitely.  The leader thread must            //leader线程必须在take，poll,...返回之前唤醒其他线程，除非其他线程临时变成leader线程
      * signal some other thread before returning from take() or
      * poll(...), unless some other thread becomes leader in the
-     * interim.  Whenever the head of the queue is replaced with
+     * interim.  Whenever the head of the queue is replaced with            //每当队列的头替换为具有更早到期时间的元素时，领导者字段就会被重置为null，从而使字段无效，并且会唤醒等待线程。
      * an element with an earlier expiration time, the leader
      * field is invalidated by being reset to null, and some
      * waiting thread, but not necessarily the current leader, is
-     * signalled.  So waiting threads must be prepared to acquire
+     * signalled.  So waiting threads must be prepared to acquire            //因此线程必须准备好在等待中获取或失去 领导者地位
      * and lose leadership while waiting.
      */
     private Thread leader = null;
@@ -133,12 +133,12 @@ public class DelayQueue<E extends Delayed> extends AbstractQueue<E>
      * @return {@code true}
      * @throws NullPointerException if the specified element is null
      */
-    public boolean offer(E e) {
+    public boolean offer(E e) { 
         final ReentrantLock lock = this.lock;
         lock.lock();
         try {
             q.offer(e);
-            if (q.peek() == e) {
+            if (q.peek() == e) {              //如果是队首，leader设置null，唤醒阻塞队列中的线程
                 leader = null;
                 available.signal();
             }
@@ -200,6 +200,8 @@ public class DelayQueue<E extends Delayed> extends AbstractQueue<E>
      *
      * @return the head of this queue
      * @throws InterruptedException {@inheritDoc}
+     *      
+     *      获取并移除队列里面延迟时间过期的元素，如果队列里面没有过期元素则等待。
      */
     public E take() throws InterruptedException {
         final ReentrantLock lock = this.lock;
@@ -211,18 +213,18 @@ public class DelayQueue<E extends Delayed> extends AbstractQueue<E>
                     available.await();
                 else {
                     long delay = first.getDelay(NANOSECONDS);
-                    if (delay <= 0)
-                        return q.poll();
+                    if (delay <= 0)                  //已过期，从最小堆直接取出并返回
+                        return q.poll();              //唯一出口
                     first = null; // don't retain ref while waiting
                     if (leader != null)
-                        available.await();
-                    else {
+                        available.await();             //释放
+                    else {                           
                         Thread thisThread = Thread.currentThread();
                         leader = thisThread;
                         try {
-                            available.awaitNanos(delay);
+                            available.awaitNanos(delay);         //释放锁对象 
                         } finally {
-                            if (leader == thisThread)
+                            if (leader == thisThread)            //
                                 leader = null;
                         }
                     }
@@ -230,7 +232,7 @@ public class DelayQueue<E extends Delayed> extends AbstractQueue<E>
             }
         } finally {
             if (leader == null && q.peek() != null)
-                available.signal();
+                available.signal();               
             lock.unlock();
         }
     }
