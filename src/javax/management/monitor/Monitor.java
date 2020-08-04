@@ -690,7 +690,7 @@ public abstract class Monitor
      */
 
     /**
-     * Starts the monitor.
+     * Starts the monitor.            //启动监视器
      */
     void doStart() {
             MONITOR_LOGGER.logp(Level.FINER, Monitor.class.getName(),

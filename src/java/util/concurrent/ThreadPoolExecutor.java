@@ -378,6 +378,7 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
      * that workerCount is 0 (which sometimes entails a recheck -- see
      * below).
      */
+    //当前线程池的状态和线程数的组合
     private final AtomicInteger ctl = new AtomicInteger(ctlOf(RUNNING, 0));
     private static final int COUNT_BITS = Integer.SIZE - 3;
     private static final int CAPACITY   = (1 << COUNT_BITS) - 1;
@@ -701,7 +702,7 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
                 (runStateOf(c) == SHUTDOWN && ! workQueue.isEmpty()))
                 return;
             if (workerCountOf(c) != 0) { // Eligible to terminate
-                interruptIdleWorkers(ONLY_ONE);
+                interruptIdleWorkers(ONLY_ONE);                 //中断空闲线程
                 return;
             }
 
@@ -929,7 +930,7 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
         boolean workerAdded = false;
         Worker w = null;
         try {
-            w = new Worker(firstTask);
+            w = new Worker(firstTask);         //新建一个worker
             final Thread t = w.thread;
             if (t != null) {
                 final ReentrantLock mainLock = this.mainLock;
@@ -954,7 +955,7 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
                     mainLock.unlock();
                 }
                 if (workerAdded) {
-                    t.start();
+                    t.start();              //线程启动的入口
                     workerStarted = true;
                 }
             }
@@ -1058,7 +1059,7 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
 
             int wc = workerCountOf(c);
 
-            // Are workers subject to culling?
+            // Are workers subject to culling? //是否被淘汰
             boolean timed = allowCoreThreadTimeOut || wc > corePoolSize;
 
             if ((wc > maximumPoolSize || (timed && timedOut))
@@ -1128,7 +1129,7 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
         Thread wt = Thread.currentThread();
         Runnable task = w.firstTask;
         w.firstTask = null;
-        w.unlock(); // allow interrupts
+        w.unlock(); // allow interrupts    设置state = 0
         boolean completedAbruptly = true;
         try {
             while (task != null || (task = getTask()) != null) {
@@ -1328,10 +1329,12 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
     /**
      * Executes the given task sometime in the future.  The task
      * may execute in a new thread or in an existing pooled thread.
-     *
+     *  //任务在将来某个时间执行，任务可能在新的线程中或者现有的线程池中执行
+     *  
      * If the task cannot be submitted for execution, either because this
      * executor has been shutdown or because its capacity has been reached,
      * the task is handled by the current {@code RejectedExecutionHandler}.
+     * //如果由于该执行程序已关闭或已达到其容量而无法提交执行任务，则该任务将由当前{@code RejectedExecutionHandler}处理
      *
      * @param command the task to execute
      * @throws RejectedExecutionException at discretion of
@@ -1350,6 +1353,7 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
          * task.  The call to addWorker atomically checks runState and
          * workerCount, and so prevents false alarms that would add
          * threads when it shouldn't, by returning false.
+         * //如果运行中的线程少于核心线程数，新建一个线程来执行任务
          *
          * 2. If a task can be successfully queued, then we still need
          * to double-check whether we should have added a thread
