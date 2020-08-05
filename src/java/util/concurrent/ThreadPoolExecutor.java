@@ -275,9 +275,9 @@ import java.util.*;
  *
  * <p><b>Extension example</b>. Most extensions of this class
  * override one or more of the protected hook methods. For example,
- * here is a subclass that adds a simple pause/resume feature:
+ * here is a subclass that adds a simple pause/resume feature:      //简单的暂停/继续功能
  *
- *  <pre> {@code
+ *  <pre> {@code         //继承ThreadPoolExecutor,实现beforeExecute和afterExecute等方法
  * class PausableThreadPoolExecutor extends ThreadPoolExecutor {
  *   private boolean isPaused;
  *   private ReentrantLock pauseLock = new ReentrantLock();

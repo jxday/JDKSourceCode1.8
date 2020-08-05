@@ -228,20 +228,22 @@ public class ScheduledThreadPoolExecutor
         ScheduledFutureTask(Callable<V> callable, long ns) {
             super(callable);
             this.time = ns;
-            this.period = 0;
+            this.period = 0;      //一次性服务
             this.sequenceNumber = sequencer.getAndIncrement();
         }
 
+        //元素过期算法，装饰后时间-当前时间 
         public long getDelay(TimeUnit unit) {
             return unit.convert(time - now(), NANOSECONDS);
         }
 
+        //比较方法               自己早，返回-1。
         public int compareTo(Delayed other) {
             if (other == this) // compare zero if same object
                 return 0;
             if (other instanceof ScheduledFutureTask) {
                 ScheduledFutureTask<?> x = (ScheduledFutureTask<?>)other;
-                long diff = time - x.time;
+                long diff = time - x.time;        
                 if (diff < 0)
                     return -1;
                 else if (diff > 0)
@@ -286,7 +288,9 @@ public class ScheduledThreadPoolExecutor
          * Overrides FutureTask version so as to reset/requeue if periodic.
          */
         public void run() {
+            //是否只执行一次
             boolean periodic = isPeriodic();
+            //周期：true   延迟：false            
             if (!canRunInCurrentRunState(periodic))
                 cancel(false);
             else if (!periodic)
@@ -328,9 +332,10 @@ public class ScheduledThreadPoolExecutor
             super.getQueue().add(task);
             if (isShutdown() &&
                 !canRunInCurrentRunState(task.isPeriodic()) &&
-                remove(task))
+                remove(task))                                      //再次检验线程池状态
                 task.cancel(false);
             else
+                //确保有线程在执行任务
                 ensurePrestart();
         }
     }
@@ -537,6 +542,8 @@ public class ScheduledThreadPoolExecutor
     /**
      * @throws RejectedExecutionException {@inheritDoc}
      * @throws NullPointerException       {@inheritDoc}
+     * 该方法的作用是提交一个延迟执行的任务，任务从提交时间算起延迟单位为unit的delay时间后开始执行。
+     * 提交的任务不是周期性任务，任务只会执行一次
      */
     public <V> ScheduledFuture<V> schedule(Callable<V> callable,
                                            long delay,
@@ -546,7 +553,7 @@ public class ScheduledThreadPoolExecutor
         RunnableScheduledFuture<V> t = decorateTask(callable,
             new ScheduledFutureTask<V>(callable,
                                        triggerTime(delay, unit)));
-        delayedExecute(t);
+        delayedExecute(t);   //添加任务到延迟队列
         return t;
     }
 
