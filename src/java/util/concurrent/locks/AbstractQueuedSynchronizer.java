@@ -982,7 +982,7 @@ public abstract class AbstractQueuedSynchronizer
     }
 
     /**
-     * Acquires in shared interruptible mode.
+     * Acquires in shared interruptible mode.         
      * @param arg the acquire argument
      */
     private void doAcquireSharedInterruptibly(int arg)
@@ -990,10 +990,10 @@ public abstract class AbstractQueuedSynchronizer
         final Node node = addWaiter(Node.SHARED);
         boolean failed = true;
         try {
-            for (;;) {
+            for (;;) {                                 //自选
                 final Node p = node.predecessor();
                 if (p == head) {
-                    int r = tryAcquireShared(arg);
+                    int r = tryAcquireShared(arg);       //获取锁
                     if (r >= 0) {
                         setHeadAndPropagate(node, r);
                         p.next = null; // help GC
@@ -1001,8 +1001,8 @@ public abstract class AbstractQueuedSynchronizer
                         return;
                     }
                 }
-                if (shouldParkAfterFailedAcquire(p, node) &&
-                    parkAndCheckInterrupt())
+                if (shouldParkAfterFailedAcquire(p, node) &&                //todo 如果执行完shouldParkAfterFailedAcquire之后，执行了unlock方法，会丢失一次unlock调用
+                    parkAndCheckInterrupt())                  //挂起
                     throw new InterruptedException();
             }
         } finally {
@@ -1531,8 +1531,8 @@ public abstract class AbstractQueuedSynchronizer
         Node t = tail; // Read fields in reverse initialization order
         Node h = head;
         Node s;
-        return h != t &&
-            ((s = h.next) == null || s.thread != Thread.currentThread());
+        return h != t &&                                //同步队列非空
+            ((s = h.next) == null || s.thread != Thread.currentThread());   //队列非空，且不是自己
     }
 
 

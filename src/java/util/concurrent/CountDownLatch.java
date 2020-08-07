@@ -37,7 +37,7 @@ package java.util.concurrent;
 import java.util.concurrent.locks.AbstractQueuedSynchronizer;
 
 /**
- * A synchronization aid that allows one or more threads to wait until
+ * A synchronization aid that allows one or more threads to wait until            //一个同步辅助工具，允许一个或多个线程等待，直到其他线程中的操作完成
  * a set of operations being performed in other threads completes.
  *
  * <p>A {@code CountDownLatch} is initialized with a given <em>count</em>.
