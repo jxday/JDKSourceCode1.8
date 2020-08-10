@@ -38,7 +38,7 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
- * A synchronization aid that allows a set of threads to all wait for
+ * A synchronization aid that allows a set of threads to all wait for         //同步帮助，允许一组线程相互等待，共同达到障碍点
  * each other to reach a common barrier point.  CyclicBarriers are
  * useful in programs involving a fixed sized party of threads that
  * must occasionally wait for each other. The barrier is called
@@ -118,7 +118,7 @@ import java.util.concurrent.locks.ReentrantLock;
  *
  * <p>The {@code CyclicBarrier} uses an all-or-none breakage model
  * for failed synchronization attempts: If a thread leaves a barrier
- * point prematurely because of interruption, failure, or timeout, all
+ * point prematurely because of interruption, failure, or timeout, all                   
  * other threads waiting at that barrier point will also leave
  * abnormally via {@link BrokenBarrierException} (or
  * {@link InterruptedException} if they too were interrupted at about
@@ -193,7 +193,8 @@ public class CyclicBarrier {
     }
 
     /**
-     * Main barrier code, covering the various policies.
+     * Main barrier code, covering the various policies.                 //主要屏障代码，包含各种策略
+     *              //最后一个调用await方法的线程不进入阻塞队列
      */
     private int dowait(boolean timed, long nanos)
         throws InterruptedException, BrokenBarrierException,
@@ -206,7 +207,7 @@ public class CyclicBarrier {
             if (g.broken)
                 throw new BrokenBarrierException();
 
-            if (Thread.interrupted()) {
+            if (Thread.interrupted()) {                    //检验中断
                 breakBarrier();
                 throw new InterruptedException();
             }
@@ -217,9 +218,9 @@ public class CyclicBarrier {
                 try {
                     final Runnable command = barrierCommand;
                     if (command != null)
-                        command.run();
+                        command.run();          //如果任务中断了线程，就检测不到中断了     //不检测barrierAction的中断状态
                     ranAction = true;
-                    nextGeneration();
+                    nextGeneration();           //唤醒线程，初始化count，generation
                     return 0;
                 } finally {
                     if (!ranAction)
@@ -231,7 +232,7 @@ public class CyclicBarrier {
             for (;;) {
                 try {
                     if (!timed)
-                        trip.await();
+                        trip.await();                 //进入阻塞队列
                     else if (nanos > 0L)
                         nanos = trip.awaitNanos(nanos);
                 } catch (InterruptedException ie) {
@@ -249,7 +250,7 @@ public class CyclicBarrier {
                 if (g.broken)
                     throw new BrokenBarrierException();
 
-                if (g != generation)
+                if (g != generation)                
                     return index;
 
                 if (timed && nanos <= 0L) {
