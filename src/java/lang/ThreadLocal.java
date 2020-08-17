@@ -264,9 +264,10 @@ public class ThreadLocal<T> {
      * ThreadLocalMap is a customized hash map suitable only for
      * maintaining thread local values. No operations are exported
      * outside of the ThreadLocal class. The class is package private to
-     * allow declaration of fields in class Thread.  To help deal with
-     * very large and long-lived usages, the hash table entries use
-     * WeakReferences for keys. However, since reference queues are not
+     * allow declaration of fields in class Thread.  
+     * To help deal with very large and long-lived usages, the hash table entries use WeakReferences for keys.
+     * //为了帮助处理非常巨大，存活时间长的使用者(thread)，哈希表使用弱引用的key
+     * However, since reference queues are not
      * used, stale entries are guaranteed to be removed only when
      * the table starts running out of space.
      */
@@ -471,7 +472,7 @@ public class ThreadLocal<T> {
                  e = tab[i = nextIndex(i, len)]) {
                 if (e.get() == key) {
                     e.clear();
-                    expungeStaleEntry(i);
+                    expungeStaleEntry(i);                        //清理空值
                     return;
                 }
             }

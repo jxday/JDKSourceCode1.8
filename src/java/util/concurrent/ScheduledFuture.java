@@ -36,9 +36,8 @@
 package java.util.concurrent;
 
 /**
- * A delayed result-bearing action that can be cancelled.
- * Usually a scheduled future is the result of scheduling
- * a task with a {@link ScheduledExecutorService}.
+ * A delayed result-bearing action that can be cancelled.          //延迟的有返回值操作，支持取消
+ * Usually a scheduled future is the result of scheduling a task with a {@link ScheduledExecutorService}.
  *
  * @since 1.5
  * @author Doug Lea
