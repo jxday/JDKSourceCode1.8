@@ -1,5 +1,9 @@
 package util;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.ListIterator;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
@@ -25,5 +29,28 @@ public class testLinkList {
 //        queue.peek();
 //        queue.poll();
         System.out.println(queue.size());
+    }
+
+    public static void teat2() {
+        LinkedList<String> list = new LinkedList<>();
+        list.add("aaa");
+        list.add("bbb");
+        list.add("ccc");
+        list.add("ddd");
+        for (String s : list) {
+            System.out.println(s);
+        }
+
+        System.err.println("============");
+        ListIterator<SObjtring> listIterator = list.listIterator();
+        while(listIterator.hasNext()){
+            System.out.println(listIterator.next());
+        }
+        System.err.println("============");
+        Iterator<String> stringIterator = list.descendingIterator();
+        for (String s : list) {
+            System.out.println(s);
+        }
+
     }
 }

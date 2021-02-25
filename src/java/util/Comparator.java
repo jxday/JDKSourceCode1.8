@@ -162,7 +162,7 @@ public interface Comparator<T> {
      * Note that it is <i>always</i> safe <i>not</i> to override
      * <tt>Object.equals(Object)</tt>.  However, overriding this method may,
      * in some cases, improve performance by allowing programs to determine
-     * that two distinct comparators impose the same order.
+     * that two distinct comparators impose theCloneable same order.
      *
      * @param   obj   the reference object with which to compare.
      * @return  <code>true</code> only if the specified object is also

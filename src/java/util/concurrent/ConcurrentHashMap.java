@@ -521,7 +521,7 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V>
      */
     final V putVal(K key, V value, boolean onlyIfAbsent) {
         if (key == null || value == null) throw new NullPointerException();// key和value不允许null
-        int hash = spread(key.hashCode());//两次hash，减少hash冲突，可以均匀分布
+        int hash = spread(key.hashCode());//两次hash，减少hash冲突，可以均匀分布  与hashMap一致
         int binCount = 0;//i处结点标志，0: 未加入新结点, 2: TreeBin或链表结点数, 其它：链表结点数。主要用于每次加入结点后查看是否要由链表转为红黑树
         for (Node<K, V>[] tab = table; ; ) {//CAS经典写法，不成功无限重试
             Node<K, V> f;
@@ -1776,6 +1776,7 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V>
      *
      * @param x     the count to add
      * @param check if <0, don't check resize, if <= 1 only check if uncontended
+     *              如果<0，则不检查调整大小，如果<= 1，仅检查是否无竞争
      */
     private final void addCount(long x, int check) {
         CounterCell[] as;

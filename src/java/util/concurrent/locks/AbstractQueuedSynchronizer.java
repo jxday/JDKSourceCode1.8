@@ -1208,8 +1208,8 @@ public abstract class AbstractQueuedSynchronizer
      */
     public final void acquire(int arg) {
         if (!tryAcquire(arg) &&
-            acquireQueued(addWaiter(Node.EXCLUSIVE), arg))
-            selfInterrupt();
+            acquireQueued(addWaiter(Node.EXCLUSIVE), arg))     //通过排队来获取锁
+            selfInterrupt();        //响应中断
     }
 
     /**

@@ -153,7 +153,7 @@ import sun.security.util.SecurityConstants;
  *
  *         private byte[] loadClassData(String name) {
  *             // load the class data from the connection
- *             &nbsp;.&nbsp;.&nbsp;.
+ *             &nbsp;.&nbsp;.&nbsp;.ThreadPoolExecutor
  *         }
  *     }
  * </pre></blockquote>
@@ -409,8 +409,10 @@ public abstract class ClassLoader {
                 long t0 = System.nanoTime();
                 try {
                     if (parent != null) {
+                        //父加载器不是BootstrapClassLoader，该方法会抛出ClassNotFoundException异常
                         c = parent.loadClass(name, false);
                     } else {
+                        //父加载器是BootstrapClassLoader
                         c = findBootstrapClassOrNull(name);
                     }
                 } catch (ClassNotFoundException e) {
@@ -422,7 +424,7 @@ public abstract class ClassLoader {
                     // If still not found, then invoke findClass in order
                     // to find the class.
                     long t1 = System.nanoTime();
-                    c = findClass(name);
+                    c = findClass(name); //把结果赋值给c变量
 
                     // this is the defining class loader; record the stats
                     sun.misc.PerfCounter.getParentDelegationTime().addTime(t1 - t0);

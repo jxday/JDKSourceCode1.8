@@ -53,6 +53,10 @@ package java.beans;
  * Each PropertyEditor should have a null constructor.
  */
 
+/**
+ *  属性编辑器
+ *  规定了将外部设置值转换为内部JavaBean属性值的转换接口方法
+ */
 public interface PropertyEditor {
 
     /**

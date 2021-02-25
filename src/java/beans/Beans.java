@@ -53,6 +53,8 @@ import java.util.Vector;
 
 /**
  * This class provides some general purpose beans control methods.
+ * 
+ * 这个类提供了通用beans的控制方法
  */
 
 public class Beans {
@@ -61,7 +63,7 @@ public class Beans {
      * <p>
      * Instantiate a JavaBean.
      * </p>
-     * @return a JavaBean
+     * @return a JavaBean     返回一个javabean
      * @param     cls         the class-loader from which we should create
      *                        the bean.  If this is null, then the system
      *                        class-loader is used.

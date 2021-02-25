@@ -1,3 +1,6 @@
+import java.util.Collections;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -11,6 +14,11 @@ public class Main {
         System.out.println("main线程启动了");
         TimeUnit.MILLISECONDS.sleep(100);
         thread.interrupt();
+
+
+        ConcurrentHashMap map = new ConcurrentHashMap();
+
+        Map<Object, Object> synchronizedMap = Collections.synchronizedMap(map);
     }
 
     public static class InterruptThread implements Runnable {

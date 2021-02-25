@@ -31,9 +31,8 @@ import java.util.function.BiFunction;
 import java.io.IOException;
 
 /**
- * <p>Hash table and linked list implementation of the <tt>Map</tt> interface,
- * with predictable iteration order.  This implementation differs from
- * <tt>HashMap</tt> in that it maintains a doubly-linked list running through
+ * <p>Hash table and linked list implementation of the <tt>Map</tt> interface,with predictable iteration order.  
+ * This implementation differs from <tt>HashMap</tt> in that it maintains a doubly-linked list running through
  * all of its entries.  This linked list defines the iteration ordering,
  * which is normally the order in which keys were inserted into the map
  * (<i>insertion-order</i>).  Note that insertion order is not affected
@@ -295,7 +294,7 @@ public class LinkedHashMap<K,V>
             a.before = b;
     }
 
-    void afterNodeInsertion(boolean evict) { // possibly remove eldest
+    void afterNodeInsertion(boolean evict) { // possibly remove eldest    putVal方法会调用该方法
         LinkedHashMap.Entry<K,V> first;
         if (evict && (first = head) != null && removeEldestEntry(first)) {
             K key = first.key;
