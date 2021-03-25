@@ -521,7 +521,7 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V>
      */
     final V putVal(K key, V value, boolean onlyIfAbsent) {
         if (key == null || value == null) throw new NullPointerException();// key和value不允许null
-        int hash = spread(key.hashCode());//两次hash，减少hash冲突，可以均匀分布  与hashMap一致
+        int hash = spread(key.hashCode());//两次hash扰动，减少hash冲突，可以均匀分布  与hashMap一致
         int binCount = 0;//i处结点标志，0: 未加入新结点, 2: TreeBin或链表结点数, 其它：链表结点数。主要用于每次加入结点后查看是否要由链表转为红黑树
         for (Node<K, V>[] tab = table; ; ) {//CAS经典写法，不成功无限重试
             Node<K, V> f;
@@ -534,7 +534,7 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V>
              * 1、如果table[i]==null(即该位置的节点为空，没有发生碰撞)，则利用CAS操作直接存储在该位置， 如果CAS操作成功则退出死循环。
              * 2、如果table[i]!=null(即该位置已经有其它节点，发生碰撞)
              */
-            else if ((f = tabAt(tab, i = (n - 1) & hash)) == null) {
+            else if ( (f = tabAt(tab, i = (n - 1) & hash))  == null) {
                 if (casTabAt(tab, i, null,
                         new Node<K, V>(hash, key, value, null)))
                     break;                   // no lock when adding to empty bin
@@ -545,8 +545,11 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V>
                 // 针对首个节点进行加锁操作，而不是segment，进一步减少线程冲突
                 synchronized (f) {
                     if (tabAt(tab, i) == f) {
+                        //当前节点是链表结构
                         if (fh >= 0) {
+                            //标记-进入同步代码块
                             binCount = 1;
+                            //遍历链表，更新或者插入
                             for (Node<K, V> e = f; ; ++binCount) {
                                 K ek;
                                 // 如果在链表中找到值为key的节点e，直接设置e.val = value即可
@@ -566,6 +569,7 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V>
                                     break;
                                 }
                             }
+                            //如果当前节点是树状结构
                         } else if (f instanceof TreeBin) {// 如果首节点为TreeBin类型，说明为红黑树结构，执行putTreeVal操作
                             Node<K, V> p;
                             binCount = 2;
