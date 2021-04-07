@@ -584,10 +584,13 @@ public abstract class AbstractQueuedSynchronizer
     private Node enq(final Node node) {
         for (;;) {
             Node t = tail;
+            //二次校验tail是否确实是null
             if (t == null) { // Must initialize
+                //初始化，head
                 if (compareAndSetHead(new Node()))
                     tail = head;
             } else {
+                //t指向tail，初始化时，tail是head，将 当前节点的前节点设置为tail，cas更新tail节点，失败-自旋
                 node.prev = t;
                 if (compareAndSetTail(t, node)) {
                     t.next = node;
@@ -609,11 +612,13 @@ public abstract class AbstractQueuedSynchronizer
         Node pred = tail;
         if (pred != null) {
             node.prev = pred;
+            //先替换tail节点，再将新tail节点放入旧tail节点的next
             if (compareAndSetTail(pred, node)) {
                 pred.next = node;
                 return node;
             }
         }
+        //如果tail是null，说明同步队列还未初始化
         enq(node);
         return node;
     }
@@ -633,6 +638,8 @@ public abstract class AbstractQueuedSynchronizer
 
     /**
      * Wakes up node's successor, if one exists.
+     * 
+     * 唤醒节点的
      *
      * @param node the node
      */
@@ -868,7 +875,7 @@ public abstract class AbstractQueuedSynchronizer
                 //上一个节点是头节点就尝试获取锁，获取到之后，将当前节点设置为头节点
                 if (p == head && tryAcquire(arg)) {
                     setHead(node);
-                    p.next = null; // help GC
+                    p.next = null; // help GC   更新了head，之前的head就没用了，所以没必要引用next
                     failed = false;
                     return interrupted;
                 }
@@ -1198,9 +1205,15 @@ public abstract class AbstractQueuedSynchronizer
       #tryAcquire} until success.  This method can be used
       to implement method {@link Lock#lock}.
      
+     read1:
         tryAcquire：可重入锁：state是0或者独占模式同步的所有者是当前线程返回true。
-        如果没有获取到锁，则执行acquireQueued，将当前线程放入同步队列
+        如果没有获取到锁，则执行acquireQueued，将当前线程放入同步队列  
      
+     read2:
+        acquire方法：调用tryAcquire方法，成功则结束，失败则调用acquireQueued方法加入同步队列，加入队列后响应中断.
+     acquireQueued(addWaiter(Node.EXCLUSIVE), arg)中的addWaiter(Node.EXCLUSIVE)方法是对获锁失败的线程放入到队列中排队等待
+     该方法的外层方法acquireQueued()就是对已经排队中的线程进行“获锁”操作
+     acquireQueued 返回true表示在阻塞过程中被中断了   返回false表示该线程获取锁的过程中并未挂起     如果争夺过程中抛出异常，则会取消争夺，Node的thread设置为null
      *
      * @param arg the acquire argument.  This value is conveyed to
      *        {@link #tryAcquire} but is otherwise uninterpreted and
@@ -1522,6 +1535,10 @@ public abstract class AbstractQueuedSynchronizer
      * @return {@code true} if there is a queued thread preceding the
      *         current thread, and {@code false} if the current thread
      *         is at the head of the queue or the queue is empty
+     *         当前线程之前是否有排队的线程
+     *         true：当前线程之前有排队的线程
+     *         false：当前线程之前没有排队的线程或者队列为空(公平锁调用方法，返回false表示可以获取锁对象)
+     *         
      * @since 1.7
      */
     public final boolean hasQueuedPredecessors() {
@@ -1658,7 +1675,7 @@ public abstract class AbstractQueuedSynchronizer
          */
         /*
            因为CAS操作替换值的时候可能会失败，所以有可能出现：
-           node.prev不为null，但是没在同步队列中。
+           node.prev不为null，但是没在同步队列中。（尾分叉：因为同步队列使用的是尾叉法，通过1.当前node的prev赋值为节点。2.cas操作替换尾节点。3.之前的为节点的next赋值为新的尾节点）
            
            所以需要从队尾向前再遍历一遍。
         */
@@ -1704,6 +1721,7 @@ public abstract class AbstractQueuedSynchronizer
         //todo 这里的node的ws可能会被修改，但是不影响唤醒。
         Node p = enq(node);
         int ws = p.waitStatus;
+        //前一个节点的wautStatus是1取消，或者无法将状态更新为-1
         if (ws > 0 || !compareAndSetWaitStatus(p, ws, Node.SIGNAL))
             LockSupport.unpark(node.thread);
         return true;
@@ -1740,10 +1758,14 @@ public abstract class AbstractQueuedSynchronizer
         boolean failed = true;
         try {
             int savedState = getState();
+            /**
+             * 释放锁，唤醒同步队列的head节点
+             */
             if (release(savedState)) {
                 failed = false;
                 return savedState;
             } else {
+                //如果当前线程未持有锁，抛出异常
                 throw new IllegalMonitorStateException();
             }
         } finally {
@@ -1892,6 +1914,7 @@ public abstract class AbstractQueuedSynchronizer
                 if ( (firstWaiter = first.nextWaiter) == null)
                     lastWaiter = null;
                 first.nextWaiter = null;
+                //transferForSignal方法：node的waitStatus改为0，并且进入同步队列
             } while (!transferForSignal(first) &&
                      (first = firstWaiter) != null);
         }
@@ -2057,17 +2080,27 @@ public abstract class AbstractQueuedSynchronizer
                 throw new InterruptedException();
             Node node = addConditionWaiter();
             int savedState = fullyRelease(node);
+            /**
+             * interruptMode 该变量有三个值：
+             *
+             * 0 ： 代表整个过程中一直没有中断发生。
+             * THROW_IE ： 表示退出await()方法时需要抛出InterruptedException，这种模式对应于中断发生在signal之前
+             * REINTERRUPT ： 表示退出await()方法时只需要再自我中断以下，这种模式对应于中断发生在signal之后，即中断来的太晚了。
+             */
             int interruptMode = 0;
-            while (!isOnSyncQueue(node)) {      //判断是否在同步队列里，确保不在队列中时挂起线程，放入队列后跳出循环。
+            while (!isOnSyncQueue(node)) {          //判断是否在同步队列里，确保不在队列中时挂起线程，放入队列后跳出循环。
                 LockSupport.park(this);     //挂起
+                //checkInterruptWhileWaiting ：检测中断状态，将当前node放入同步队列
                 if ((interruptMode = checkInterruptWhileWaiting(node)) != 0)    //唤醒后判断线程的中断状态
                     break;
             }
+            //acquireQueued方法会获取锁或者阻塞，直到获取到锁。返回中断标记
             if (acquireQueued(node, savedState) && interruptMode != THROW_IE)
                 interruptMode = REINTERRUPT;
             if (node.nextWaiter != null) // clean up if cancelled
                 unlinkCancelledWaiters();
             if (interruptMode != 0)
+                //响应中断
                 reportInterruptAfterWait(interruptMode);
         }
 

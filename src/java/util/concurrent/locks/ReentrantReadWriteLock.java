@@ -463,10 +463,20 @@ public class ReentrantReadWriteLock
                 "attempt to unlock read lock, not locked by current thread");
         }
 
+        /**
+         * 
+         * @param unused
+         * 
+         * @return
+         * 如果该值小于0，则代表当前线程获取共享锁失败
+         * 如果该值大于0，则代表当前线程获取共享锁成功，并且接下来其他线程尝试获取共享锁的行为很可能成功
+         * 如果该值等于0，则代表当前线程获取共享锁成功，但是接下来其他线程尝试获取共享锁的行为会失败
+         */
         protected final int tryAcquireShared(int unused) {
             /*
              * Walkthrough:
              * 1. If write lock held by another thread, fail.
+             *      如果写锁持有其他线程，失败
              * 2. Otherwise, this thread is eligible for
              *    lock wrt state, so ask if it should block
              *    because of queue policy. If not, try
@@ -475,6 +485,7 @@ public class ReentrantReadWriteLock
              *    acquires, which is postponed to full version
              *    to avoid having to check hold count in
              *    the more typical non-reentrant case.
+             * 
              * 3. If step 2 fails either because thread
              *    apparently not eligible or CAS fails or count
              *    saturated, chain to version with full retry loop.
@@ -981,6 +992,7 @@ public class ReentrantReadWriteLock
          * @see Sync#acquireQueued(AbstractQueuedSynchronizer.Node, int) 
          */
         public void lock() {
+            //调用aqs的acquire方法
             sync.acquire(1);
         }
 
